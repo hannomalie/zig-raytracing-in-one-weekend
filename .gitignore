@@ -1,0 +1,7 @@
+*.iml
+zig-out
+zig-cache
+out
+lsp
+.idea
+image.ppm
