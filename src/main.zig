@@ -1,11 +1,22 @@
 const std = @import("std");
+const float3 = @import("./float3.zig");
+const Float3 = float3.Float3;
+const ray = @import("./ray.zig");
+const Ray = ray.Ray;
+
+fn ray_color(r: Ray) f32 {
+    const unit_direction = float3.unit_vector(r.direction);
+    const t = 0.5 * (unit_direction.y + 1.0);
+    return float3.multiply(1.0 - t, Float3{.x=1.0,.y=1.0,.z=1.0}) + float3.multiply(t, Float3{.x=0.5,.y=0.7,.z=1.0});
+}
 
 pub fn main() anyerror!void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("Starting ray tracing process ...\n", .{});
 
-    const image_width = 256;
-    const image_height = 256;
+    const aspect_radio = 16.0 / 9.0;
+    const image_width = 400;
+    const image_height = @floatToInt(u32, image_width / aspect_radio);
 
     const file = try std.fs.cwd().createFile("image.ppm", .{});
     const writer = file.writer();
@@ -20,11 +31,13 @@ pub fn main() anyerror!void {
             const g = @intToFloat(f32, image_height - j) / @intToFloat(f32, image_height);
             const b = 0.25;
 
-            const ir = @floatToInt(u8, 255.999 * r);
-            const ig = @floatToInt(u8, 255.999 * g);
-            const ib = @floatToInt(u8, 255.999 * b);
+            const color = Float3{
+                .x = r,
+                .y = g,
+                .z = b,
+            };
 
-            try writer.print("{} {} {}\n", .{ir, ig, ib});
+            try float3.printColor(writer, color);
         }
     }
 
