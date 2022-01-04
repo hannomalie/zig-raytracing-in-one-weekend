@@ -1,9 +1,9 @@
 const std = @import("std");
 
 pub const Float3 = packed struct {
-    x: f32 = 0,
-    y: f32 = 0,
-    z: f32 = 0,
+    x: f64 = 0,
+    y: f64 = 0,
+    z: f64 = 0,
 };
 
 pub fn add(a: Float3, b: Float3) Float3 {
@@ -27,7 +27,7 @@ pub fn multiply(a: Float3, b: Float3) Float3 {
         .z = a.z * b.z,
     };
 }
-pub fn multiplyFloat(a: Float3, b: f32) Float3 {
+pub fn multiplyFloat(a: Float3, b: f64) Float3 {
     return Float3{
         .x = a.x * b,
         .y = a.y * b,
@@ -41,7 +41,7 @@ pub fn divide(a: Float3, b: Float3) Float3 {
         .z = a.z / b.z,
     };
 }
-pub fn divideFloat(a: Float3, b: f32) Float3 {
+pub fn divideFloat(a: Float3, b: f64) Float3 {
     return Float3{
         .x = a.x / b,
         .y = a.y / b,
@@ -55,7 +55,7 @@ pub fn invert(a: Float3) Float3 {
         .z = -a.z,
     };
 }
-pub fn dot(a: Float3, b: Float3) f32 {
+pub fn dot(a: Float3, b: Float3) f64 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 pub fn cross(a: Float3, b: Float3) Float3 {
@@ -65,17 +65,17 @@ pub fn cross(a: Float3, b: Float3) Float3 {
         .z = a.x * b.y - a.y * b.x,
     };
 }
-pub fn length(a: Float3) f32 {
+pub fn length(a: Float3) f64 {
     return std.math.sqrt(length_squared(a));
 }
-pub fn length_squared(a: Float3) f32 {
+pub fn length_squared(a: Float3) f64 {
     return a.x * a.x + a.y * a.y + a.z * a.z;
 }
 
 pub fn unit_vector(v: Float3) Float3 {
     return divideFloat(v, length(v));
 }
-pub fn print(writer: std.io.Writer, a: Float3) f32 {
+pub fn print(writer: std.io.Writer, a: Float3) f64 {
     try writer.print("{} {} {}\n", .{a.x, a.y, a.z});
 }
 // https://issueexplorer.com/issue/ziglang/zig/9656

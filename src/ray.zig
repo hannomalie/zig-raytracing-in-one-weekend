@@ -6,6 +6,6 @@ pub const Ray = packed struct {
     direction: Float3 = Float3 {},
 };
 
-pub fn at(ray: Ray, t: f32) Float3 {
+pub fn at(ray: Ray, t: f64) Float3 {
     return float3.add(ray.origin, float3.multiplyFloat(ray.direction, t));
 }
