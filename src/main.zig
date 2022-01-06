@@ -1,19 +1,22 @@
 const std = @import("std");
 const Float3 = @import("./float3.zig").Float3;
 const Ray = @import("./ray.zig").Ray;
+const _hit = @import("./hit.zig");
 const Sphere = @import("./sphere.zig").Sphere;
 
 fn ray_color(r: Ray) Float3 {
-    const hitResult = (Sphere{.center = Float3{.z=-1.0}, .radius = 0.5}).hit(r, 0.0, 1000.0);
-    switch(hitResult) {
-        .hit => |value| {
-            return value.normal.add(Float3{.x=1,.y=1,.z=1}).multiplyFloat(0.5);
-        },
-        .no_hit => {
-            const unit_direction = r.direction.unit_vector();
-            const t_new = 0.5 * (unit_direction.y + 1.0);
-            return (Float3{.x=1.0,.y=1.0,.z=1.0}).multiplyFloat(1.0 - t_new).add((Float3{.x=0.5,.y=0.7,.z=1.0}).multiplyFloat(t_new));
-        },
+    const spheres = [_]Sphere{
+        Sphere{.center = Float3{.z=-1.0}, .radius = 0.5},
+        Sphere{.center = Float3{.z=-4.0}, .radius = 2.5}
+    };
+    const optional_hit_result = _hit.hit(Sphere, spheres.len, spheres, r, 0.0, 1000.0);
+
+    if(optional_hit_result) |hit_result| {
+        return hit_result.normal.add(Float3{.x=1,.y=1,.z=1}).multiplyFloat(0.5);
+    } else {
+        const unit_direction = r.direction.unit_vector();
+        const t_new = 0.5 * (unit_direction.y + 1.0);
+        return (Float3{.x=1.0,.y=1.0,.z=1.0}).multiplyFloat(1.0 - t_new).add((Float3{.x=0.5,.y=0.7,.z=1.0}).multiplyFloat(t_new));
     }
 }
 
