@@ -3,6 +3,7 @@ const Float3 = @import("./float3.zig").Float3;
 const Ray = @import("./ray.zig").Ray;
 const _hit = @import("./hit.zig");
 const Sphere = @import("./sphere.zig").Sphere;
+const Camera = @import("./camera.zig").Camera;
 
 fn ray_color(r: Ray) Float3 {
     const spheres = [_]Sphere{
@@ -28,18 +29,7 @@ pub fn main() anyerror!void {
     const image_width = 400;
     const image_height = @floatToInt(u32, image_width / aspect_radio);
 
-    const viewport_height = 2.0;
-    const viewport_width = aspect_radio * viewport_height;
-    const focal_length = 1.0;
-
-    const origin = Float3{};
-    const horizontal = Float3{.x=viewport_width,.y=0.0,.z=0.0};
-    const vertical = Float3{.x=0.0,.y=viewport_height,.z=0.0};
-    const horizontal_half = horizontal.divideFloat(2.0);
-    const vertical_half = vertical.divideFloat(2.0);
-    var lower_left_corner = origin.subtract(horizontal_half);
-    lower_left_corner = lower_left_corner.subtract(vertical_half);
-    lower_left_corner = lower_left_corner.subtract(Float3{.x=0.0,.y=0.0,.z=focal_length});
+    const camera = Camera{.aspect_ratio=aspect_radio};
 
     const file = try std.fs.cwd().createFile("image.ppm", .{});
     const writer = file.writer();
@@ -53,11 +43,7 @@ pub fn main() anyerror!void {
             try stdout.print("tracing pixel at {} x {} process ...\n", .{i, j});
             const u = @intToFloat(f64, i) / @intToFloat(f64, image_width);
             const v = @intToFloat(f64, image_height - j) / @intToFloat(f64, image_height);
-            const uTimesHorizontal = horizontal.multiplyFloat(u);
-            const vTimesVertical = vertical.multiplyFloat(v);
-            const position = lower_left_corner.add(uTimesHorizontal.add(vTimesVertical));
-            const direction = position.subtract(origin);
-            const cameraRay = Ray{.origin=origin, .direction=direction};
+            const cameraRay = camera.get_ray(u, v);
 
             const color = ray_color(cameraRay);
 
