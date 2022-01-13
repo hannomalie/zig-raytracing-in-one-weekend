@@ -26,7 +26,8 @@ pub const Material = struct {
             const sin_theta = std.math.sqrt(1.0 - (cos_theta*cos_theta));
 
             const cannot_refract = refraction_ratio * sin_theta > 1.0;
-            const direction = if (cannot_refract) unit_direction.reflect(hit_result.normal) else unit_direction.refract(hit_result.normal, refraction_ratio);
+            const reflectance_too_big = reflectance(cos_theta, refraction_ratio) > random.random_double();
+            const direction = if (cannot_refract or reflectance_too_big) unit_direction.reflect(hit_result.normal) else unit_direction.refract(hit_result.normal, refraction_ratio);
             return ScatterResult{.ray=Ray{.origin=hit_result.p, .direction=direction}, .attenuation=self.albedo, .foo=true};
         }
 
@@ -48,4 +49,9 @@ pub const Material = struct {
     }
 };
 
-// TODO: Implement metal material with reflect
+// Use Schlick's approximation for reflectance.
+pub fn reflectance(cosine: f64, ref_idx: f64) f64 {
+    var r0 = (1-ref_idx) / (1+ref_idx);
+    r0 = r0*r0;
+    return r0 + ((1-r0) * std.math.pow(f64, (1 - cosine), 5));
+}

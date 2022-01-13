@@ -33,6 +33,7 @@ pub fn main() anyerror!void {
         Sphere{.center = Float3{.y=-100.5,.z=-1.0}, .radius = 100.0, .material = Material{.albedo=Float3{.x=1.0}}},
         Sphere{.center = Float3{.z=-1.0}, .radius = 0.5},
         Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = 0.5, .material = Material{.transparency=1.0,.ir=1.5}},
+        Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = -0.4, .material = Material{.transparency=1.0,.ir=1.5}},
         Sphere{.center = Float3{.x=1.0,.z=-1.0}, .radius = 0.5, .material = Material{.albedo=Float3{.x=0.1,.y=0.8,.z=0.1},.metallic=1.0,.fuzz=0.3}}
     };
 
