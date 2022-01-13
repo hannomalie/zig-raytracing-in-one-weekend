@@ -1,4 +1,6 @@
 const std = @import("std");
+const clamp = std.math.clamp;
+const random = @import("./random.zig");
 
 pub const Float3 = packed struct {
     x: f64 = 0,
@@ -10,6 +12,9 @@ pub const Float3 = packed struct {
             .y = a.y + b.y,
             .z = a.z + b.z,
         };
+    }
+    pub fn subtract_float(a: Float3, b: f64) Float3 {
+        return a.subtract(Float3{.x=b,.y=b,.z=b});
     }
     pub fn subtract(a: Float3, b: Float3) Float3 {
         return Float3{
@@ -25,7 +30,7 @@ pub const Float3 = packed struct {
             .z = a.z * b.z,
         };
     }
-    pub fn multiplyFloat(a: Float3, b: f64) Float3 {
+    pub fn multiply_float(a: Float3, b: f64) Float3 {
         return Float3{
             .x = a.x * b,
             .y = a.y * b,
@@ -69,25 +74,39 @@ pub const Float3 = packed struct {
     pub fn length_squared(a: Float3) f64 {
         return a.x * a.x + a.y * a.y + a.z * a.z;
     }
-
+    pub fn reflect(self: Float3, n: Float3) Float3 {
+        return self.subtract(n.multiply_float(2.0 * self.dot(n)));
+    }
+    pub fn refract(self: Float3, n: Float3, etai_over_etat: f64) Float3 {
+        const cos_theta = std.math.min(self.multiply_float(-1.0).dot(n), 1.0);
+        const r_out_perp =  (self.add(n.multiply_float(cos_theta))).multiply_float(etai_over_etat);
+        const r_out_parallel = n.multiply_float(-1.0 * std.math.sqrt(std.math.absFloat(1.0 - r_out_perp.length_squared())));
+        return r_out_perp.add(r_out_parallel);
+    }
     pub fn unit_vector(v: Float3) Float3 {
         return divideFloat(v, length(v));
     }
+
+    // Return true if the vector is close to zero in all dimensions.
+    pub fn is_near_zero(self: Float3) bool {
+        const s = 1e-8;
+        return (std.math.absFloat(self.x) < s) and (std.math.absFloat(self.y) < s) and (std.math.absFloat(self.z) < s);
+    }
+
     pub fn print(writer: std.io.Writer, a: Float3) f64 {
         try writer.print("{} {} {}\n", .{a.x, a.y, a.z});
     }
     // https://issueexplorer.com/issue/ziglang/zig/9656
     // I need anytype here
     pub fn printColor(a: Float3, writer: anytype) !void {
-        const ir = @floatToInt(u8, 255.999 * a.x);
-        const ig = @floatToInt(u8, 255.999 * a.y);
-        const ib = @floatToInt(u8, 255.999 * a.z);
 
-        try writer.print("{} {} {}\n", .{ir, ig, ib});
+        const r = @floatToInt(u8, 256 * clamp(std.math.sqrt(a.x), 0.0, 0.999));
+        const g = @floatToInt(u8, 256 * clamp(std.math.sqrt(a.y), 0.0, 0.999));
+        const b = @floatToInt(u8, 256 * clamp(std.math.sqrt(a.z), 0.0, 0.999));
+
+        try writer.print("{} {} {}\n", .{r,g,b});
     }
 };
-
-
 
 
 test "Float3 has defined size of three floats" {

@@ -17,8 +17,8 @@ pub const Camera = struct {
         lower_left_corner = lower_left_corner.subtract(vertical_half);
         lower_left_corner = lower_left_corner.subtract(Float3{.x=0.0,.y=0.0,.z=focal_length});
 
-        const uTimesHorizontal = horizontal.multiplyFloat(u);
-        const vTimesVertical = vertical.multiplyFloat(v);
+        const uTimesHorizontal = horizontal.multiply_float(u);
+        const vTimesVertical = vertical.multiply_float(v);
         const position = lower_left_corner.add(uTimesHorizontal.add(vTimesVertical));
         const direction = position.subtract(self.origin);
         const cameraRay = Ray{.origin=self.origin, .direction=direction};
