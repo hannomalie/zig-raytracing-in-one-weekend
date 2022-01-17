@@ -8,6 +8,50 @@ const random = @import("./random.zig");
 const random_double = random.random_double;
 const Material = @import("./material.zig").Material;
 
+fn random_scene() [23*23+1]Sphere {
+    var result: [23*23+1]Sphere = undefined;
+    for(range(23)) | _, ai | {
+        for(range(23)) | _, bi | {
+            const a = @intCast(i8, ai) - 11;
+            const b = @intCast(i8, bi) - 11;
+            const choose_mat = random.random_double();
+            const center = Float3{
+                .x = @intToFloat(f64, a) + 0.9 * random.random_double(),
+                .y = 0.2,
+                .z = @intToFloat(f64, b) * 0.9 * random.random_double(),
+            };
+
+            if(center.subtract(Float3{.x=4,.y=0.2}).length() > 0.9) {
+                if(choose_mat < 0.8) {
+                    const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
+                    result[ai+bi] = Sphere{
+                        .center = center,
+                        .radius = 0.2,
+                        .material = Material{.albedo = albedo}
+                    };
+                } else if(choose_mat < 0.95) {
+                    const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
+                    const fuzz = random.random_double();
+                    result[ai+bi] = Sphere{
+                        .center = center,
+                        .radius = 0.2,
+                        .material = Material{.albedo = albedo, .fuzz = fuzz}
+                    };
+                } else {
+                    const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
+                    result[ai+bi] = Sphere{
+                        .center = center,
+                        .radius = 0.2,
+                        .material = Material{.albedo = albedo, .transparency = 1.0, .ir = 1.5}
+                    };
+                }
+            }
+        }
+    }
+    result[23*23] = Sphere{.center = Float3{.y=-100.5,.z=-1.0}, .radius = 100.0, .material = Material{.albedo=Float3{.x=1.0}}};
+    return result;
+}
+
 fn ray_color(r: Ray, comptime T: type, comptime L: usize, objects: [L]T, depth: u8) Float3 {
     if(depth <= 0) return Float3{};
 
@@ -29,24 +73,30 @@ fn ray_color(r: Ray, comptime T: type, comptime L: usize, objects: [L]T, depth: 
 
 pub fn main() anyerror!void {
 
-    const spheres = [_]Sphere{
-        Sphere{.center = Float3{.y=-100.5,.z=-1.0}, .radius = 100.0, .material = Material{.albedo=Float3{.x=1.0}}},
-        Sphere{.center = Float3{.z=-1.0}, .radius = 0.5},
-        Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = 0.5, .material = Material{.transparency=1.0,.ir=1.5}},
-        Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = -0.4, .material = Material{.transparency=1.0,.ir=1.5}},
-        Sphere{.center = Float3{.x=1.0,.z=-1.0}, .radius = 0.5, .material = Material{.albedo=Float3{.x=0.1,.y=0.8,.z=0.1},.metallic=1.0,.fuzz=0.3}}
-    };
+    //const spheres = [_]Sphere{
+    //    Sphere{.center = Float3{.y=-100.5,.z=-1.0}, .radius = 100.0, .material = Material{.albedo=Float3{.x=1.0}}},
+    //    Sphere{.center = Float3{.z=-1.0}, .radius = 0.5},
+    //    Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = 0.5, .material = Material{.transparency=1.0,.ir=1.5}},
+    //    Sphere{.center = Float3{.x=-1.0,.z=-1.0}, .radius = -0.4, .material = Material{.transparency=1.0,.ir=1.5}},
+    //    Sphere{.center = Float3{.x=1.0,.z=-1.0}, .radius = 0.5, .material = Material{.albedo=Float3{.x=0.1,.y=0.8,.z=0.1},.metallic=1.0,.fuzz=0.3}}
+    //};
+    const spheres = random_scene();
 
     const stdout = std.io.getStdOut().writer();
     try stdout.print("Starting ray tracing process ...\n", .{});
 
+    const samples_per_pixel = 500;
     const aspect_radio = 16.0 / 9.0;
     const image_width = 400;
     const image_height = @floatToInt(u32, image_width / aspect_radio);
 
     const max_depth: u8 = 20;
 
-    const camera = Camera{.aspect_ratio=aspect_radio};
+    const camera = Camera{
+        .origin=Float3{.x=-2,.y=2,.z=1},
+        .look_at=Float3{.x=0,.y=0,.z=-1},
+        .aspect_ratio=aspect_radio
+        };
 
     const file = try std.fs.cwd().createFile("image.ppm", .{});
     const writer = file.writer();
@@ -63,7 +113,6 @@ pub fn main() anyerror!void {
             const use_multisampling = true;
 
             if(use_multisampling) {
-                const samples_per_pixel = 120;
                 const scale = 1.0 / @intToFloat(f64, samples_per_pixel);
                 for(range(samples_per_pixel)) | _ | {
                     const u = (@intToFloat(f64, i) + random_double()) / @intToFloat(f64, image_width);
