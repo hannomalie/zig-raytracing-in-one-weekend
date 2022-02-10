@@ -37,3 +37,11 @@ pub fn random_float3_in_unit_sphere() Float3 {
 pub fn random_unit_float3() Float3 {
     return random_float3_in_unit_sphere().unit_vector();
 }
+
+pub fn random_in_unit_disk() Float3 {
+    while(true) {
+        const p = Float3{.x=random_double_in_range(-1,1), .y=random_double_in_range(-1,1), .z=0};
+        if(p.length_squared() >= 1.0) continue;
+        return p;
+    }
+}

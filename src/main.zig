@@ -8,23 +8,25 @@ const random = @import("./random.zig");
 const random_double = random.random_double;
 const Material = @import("./material.zig").Material;
 
-fn random_scene() [23*23+1]Sphere {
-    var result: [23*23+1]Sphere = undefined;
+fn random_scene() [23*23+4]Sphere {
+    var result: [23*23+4]Sphere = undefined;
+    result[0] = Sphere{.center = Float3{.y=-1000.0}, .radius = 1000.0, .material = Material{.albedo=Float3{.x=0.5,.y=0.5,.z=0.5}}};
     for(range(23)) | _, ai | {
         for(range(23)) | _, bi | {
             const a = @intCast(i8, ai) - 11;
             const b = @intCast(i8, bi) - 11;
             const choose_mat = random.random_double();
             const center = Float3{
-                .x = @intToFloat(f64, a) + 0.9 * random.random_double(),
+                .x = @intToFloat(f64, a) + 0.5 * random.random_double_in_range(-1, 1),
                 .y = 0.2,
-                .z = @intToFloat(f64, b) * 0.9 * random.random_double(),
+                .z = @intToFloat(f64, b) * 0.5 * random.random_double_in_range(-1, 1),
             };
 
+            const resultIndex = ai+bi + 1;
             if(center.subtract(Float3{.x=4,.y=0.2}).length() > 0.9) {
                 if(choose_mat < 0.8) {
                     const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
-                    result[ai+bi] = Sphere{
+                    result[resultIndex] = Sphere{
                         .center = center,
                         .radius = 0.2,
                         .material = Material{.albedo = albedo}
@@ -32,14 +34,14 @@ fn random_scene() [23*23+1]Sphere {
                 } else if(choose_mat < 0.95) {
                     const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
                     const fuzz = random.random_double();
-                    result[ai+bi] = Sphere{
+                    result[resultIndex] = Sphere{
                         .center = center,
                         .radius = 0.2,
                         .material = Material{.albedo = albedo, .fuzz = fuzz}
                     };
                 } else {
                     const albedo = random.random_float3_in_unit_sphere().multiply(random.random_float3_in_unit_sphere());
-                    result[ai+bi] = Sphere{
+                    result[resultIndex] = Sphere{
                         .center = center,
                         .radius = 0.2,
                         .material = Material{.albedo = albedo, .transparency = 1.0, .ir = 1.5}
@@ -48,7 +50,9 @@ fn random_scene() [23*23+1]Sphere {
             }
         }
     }
-    result[23*23] = Sphere{.center = Float3{.y=-100.5,.z=-1.0}, .radius = 100.0, .material = Material{.albedo=Float3{.x=1.0}}};
+    result[23*23+1] = Sphere{.center = Float3{.y=1.0}, .radius = 1.0, .material = Material{.transparency=1.0,.ir=1.5}};
+    result[23*23+2] = Sphere{.center = Float3{.x=-4,.y=1.0}, .radius = 1.0, .material = Material{.albedo=Float3{.x=0.1, .y=0.7, .z=0.1},.metallic=1.0}};
+    result[23*23+3] = Sphere{.center = Float3{.x=4,.y=1.0}, .radius = 1.0, .material = Material{.albedo=Float3{.x=0.4, .y=0.2, .z=0.1}}};
     return result;
 }
 
@@ -85,18 +89,23 @@ pub fn main() anyerror!void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("Starting ray tracing process ...\n", .{});
 
-    const samples_per_pixel = 500;
+    const samples_per_pixel = 250;
     const aspect_radio = 16.0 / 9.0;
     const image_width = 400;
     const image_height = @floatToInt(u32, image_width / aspect_radio);
 
     const max_depth: u8 = 20;
 
+    const origin = Float3{.x=13,.y=2,.z=3};
+    const look_at=Float3{.x=0,.y=0,.z=0};
     const camera = Camera{
-        .origin=Float3{.x=-2,.y=2,.z=1},
-        .look_at=Float3{.x=0,.y=0,.z=-1},
-        .aspect_ratio=aspect_radio
-        };
+        .origin=origin,
+        .look_at=look_at,
+        .aspect_ratio=aspect_radio,
+        .aperture=0.1,
+        .focus_dist=10.0,
+        .fov=20.0
+    };
 
     const file = try std.fs.cwd().createFile("image.ppm", .{});
     const writer = file.writer();
